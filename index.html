@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+
+  <link rel="stylesheet" href="styles.css">
+
+
+<head>
+<style>
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+/* Style the list items */
+ul li {
+  position: relative;
+  padding: 12px 8px 12px 40px;
+  list-style-type: none;
+  background: #eee;
+  font-size: 18px;
+  transition: 0.2s;
+  
+}
+
+/* Set all odd list items to a different color (zebra-stripes) */
+ul li:nth-child(odd) {
+  background: #f9f9f9;
+}
+
+/* When clicked on, add a background color and strike out text */
+ul li.checked {
+  background: #888;
+  color: #fff;
+  text-decoration: line-through;
+}
+
+/* Add a "checked" mark when clicked on */
+ul li.checked::before {
+  content: '';
+  position: absolute;
+  border-color: #fff;
+  border-style: solid;
+  border-width: 0 2px 2px 0;
+  top: 10px;
+  left: 16px;
+  transform: rotate(45deg);
+  height: 15px;
+  width: 7px;
+}
+</style>
+</head>
+<body>
+
+<div class="navigation">
+  <li><a class="active" href="index.html">Home</a></li>
+  <li><a href="mybasket.html">myBasket</a></li>
+  <li><a href="myoffer.html">myOffer</a></li>
+  <li><a href="prefrences.html">Preferences</a></li>
+  <li><a href="about.html">About</a></li>
+</div>
+
+ <div class="search-navigation">
+<img class="title" src="icons/title.png">
+
+
+  <div class="search-container" href="index.html">
+
+
+
+    <form action="javascript:executeSearch()" id="id-searchbox">
+      <input type="text" placeholder="Search .." name="fname">
+      <button type="submit" style="height: 32px">
+<img src="icons/search.png" class="search-icon">
+</button>
+    </form>
+  </div>
+</div>
+
+<p>Sort by<select id="id-sortselect">
+  <option value="distance">Nearest</option>
+</select>
+<button onclick="sortResults()"> Ok </button>
+</p>
+
+
+<p id="main-greeting">Welcome !</p>
+<!------------------------------>
+<!-- Search result -->
+<!div id="id-mainelement">
+
+
+<ul id="myUL" style="list-style-type: none; width 100%;">
+</ul>
+
+<script>
+const {ipcRenderer} = require('electron') 
+var maxitem=10
+//taggedvalue=0
+var expandvalue
+var searchresultscopy=[]
+
+setInterval(function(){ displaySearch() }, 3000);
+
+//-----------------------------------------
+function executeSearch(){
+
+
+ipcRenderer.send('asynchronous-searchrequest',document.getElementById("id-searchbox").elements[0].value)
+
+
+	
+//for (var reexec=0;reexec<10;reexec++){		setTimeout(function (){
+
+ ipcRenderer.on('asynchronous-searchrequest-reply', (event, arg) => {
+searchresultscopy=arg
+expandvalue=-1
+document.getElementById("main-greeting").innerHTML = "search results found "//+expandvalue;//searchresultscopy.length
+
+displaySearch()
+  })
+//}, 1000);	}
+
+}
+//------------------------------------------
+function displaySearch() {
+ 
+//var element = document.getElementById("id-mainelement");
+
+//var argarr=narg.split(';')
+
+//document.getElementById("main-greeting").innerHTML = "search results found "+expandvalue;//searchresultscopy.length
+
+ 
+document.getElementById("myUL").innerHTML = "";
+
+if (searchresultscopy.length>0) {
+
+
+var j;
+var itemnum=0
+//for ( j = 0; j < (argarr.length-1); j+=3) {
+while  (itemnum<searchresultscopy.length)  {
+
+
+var li = document.createElement("li");
+li.id = itemnum.toString();
+
+        var tbl     = document.createElement("table");
+        var tblBody = document.createElement("tbody")
+	
+	
+            var row = document.createElement("tr");
+		//-------------------------------------
+		
+		var imgcell = document.createElement("td");    
+		var imgcellContent = document.createElement("IMG");
+
+ 		if (searchresultscopy[itemnum].filedirectory!=''){
+   		imgcellContent.setAttribute("src", searchresultscopy[itemnum].filedirectory);
+
+		} 
+     		imgcellContent.setAttribute("width", "250");
+    		imgcellContent.setAttribute("height", "250");
+    		//imgcellContent.setAttribute("alt", "The Pulpit Rock");
+
+                imgcell.appendChild(imgcellContent);
+
+
+imgcell.style.cursor = "pointer";
+/*
+imgcell.onclick = function() { if (expandvalue===itemnum) 
+{expandvalue=-1} else {expandvalue=itemnum}
+
+ipcRenderer.send('asynchronous-detailsrequest',itemnum)
+
+
+//ipcRenderer.on('asynchronous-detailsrequest-reply', (event, argdetails) => {
+
+//searchresultscopy[itemnum].details=argdetails
+
+//displaySearch()
+
+//)}
+displaySearch()
+		 };*/
+
+//-----------------------------------
+imgcell.addEventListener('click', function(ev) {
+ var div = (((this.parentElement).parentElement).parentElement).parentElement;
+     // div.style.display = "none";
+ipcRenderer.send('asynchronous-itemdetailsrequest',div.id)
+
+if (expandvalue===div.id) 
+{expandvalue=-1} else {expandvalue=div.id}
+
+
+
+displaySearch()
+}, false);
+//-----------------------------------
+
+                row.appendChild(imgcell);
+		
+		//----------------------------------
+             	var cell = document.createElement("td");    
+		var inputValue = searchresultscopy[itemnum].description;
+var t=inputValue.split('\n')
+	if(t[0].length>0){         
+           cell.appendChild(document.createTextNode(t[0]));
+         }
+         for(var i=1;i<t.length;i++){
+            cell.appendChild(document.createElement('BR'));
+            if(t[i].length>0){
+              cell.appendChild(document.createTextNode(t[i]));
+            }
+         } 
+
+
+		cell.setAttribute("style", "display: inline-block;");
+
+cell.style.cursor = "pointer";
+//-----------------------------------
+cell.addEventListener('click', function(ev) {
+ var div = (((this.parentElement).parentElement).parentElement).parentElement;
+     // div.style.display = "none";
+ipcRenderer.send('asynchronous-itemdetailsrequest',div.id)
+
+if (expandvalue===div.id) 
+{expandvalue=-1} else {expandvalue=div.id}
+
+
+
+displaySearch()
+}, false);
+//-----------------------------------	
+             row.appendChild(cell);
+		//row.setAttribute("style", "width: 100%;");
+		
+
+
+            tblBody.appendChild(row);
+//-------------------------
+if (expandvalue==itemnum){
+var rowexpand = document.createElement("tr");
+
+var cellexpand = document.createElement("td");
+//cellexpand.appendChild(document.createTextNode("Item details :"));
+//cellexpand.appendChild(document.createTextNode("Progress : "+searchresultscopy[itemnum].itemprogress+"%"));
+//cellexpand.appendChild(document.createElement('BR'))
+//cellexpand.setAttribute("style", "display: inline-block;");
+rowexpand.appendChild(cellexpand);
+
+var cellattachement = document.createElement("td");
+
+ipcRenderer.send('asynchronous-expandrequest',expandvalue)
+
+
+
+
+ ipcRenderer.on('asynchronous-expandrequest-reply', (event, arg) => {
+
+
+for (var tempint=0;tempint<arg.length;tempint++){
+//-----------------------------------------------
+/*
+if (arg[tempint]!=''){
+//var attachementlink = document.createElement('a');
+        
+	//attachementlink.innerHTML =arg[tempint]//temparg[tempint]
+	var attachementlink=document.createTextNode(arg[tempint])
+	attachementlink.onclick = function() {
+		const {shell} = require('electron')
+		shell.showItemInFolder('./cached/search/')
+	}
+	attachementlink.style.cursor = "pointer";
+	cellattachement.appendChild(attachementlink)
+}*/
+//---------------------------------------
+	cellattachement.appendChild(document.createTextNode(arg[tempint]));
+	cellattachement.appendChild(document.createElement('BR'))
+	}
+  })
+
+
+
+cellattachement.setAttribute("style", "word-break: break-all;");
+rowexpand.appendChild(cellattachement);
+//rowexpand.setAttribute("style", "display: inline-block;");
+//rowexpand.setAttribute("style", "background-color: #D3D3D3; width 100%;");
+tblBody.appendChild(rowexpand);
+
+//-------------------------------
+
+//-------------------------------
+
+
+}
+//-------------------------
+var rowplus = document.createElement("tr");
+var cellplus = document.createElement("td");
+ cellplus.appendChild(document.createTextNode(searchresultscopy[itemnum].distance+" km " ));
+//rowplus.appendChild(cellplus);
+
+//------------------------------------
+//------------------------------------
+//var lovecellvalue = document.createElement("td");
+//lovecellvalue.appendChild(document.createTextNode("00"));
+cellplus.appendChild(document.createTextNode(searchresultscopy[itemnum].nblove))//"  00  "));
+//rowplus.appendChild(lovecellvalue);
+//cellplus.appendChild(lovecellvalue);
+//	var lovecell = document.createElement("td");    
+ 
+		var lovecellContent = document.createElement("IMG");
+		if (searchresultscopy[itemnum].taggedvalue==1){
+    		lovecellContent.setAttribute("src", "icons/LoveOn.png");
+		} else {
+		lovecellContent.setAttribute("src", "icons/LoveOff.png");
+		}
+    		//lovecellContent.setAttribute("width", "304");
+    		lovecellContent.setAttribute("height", "13");
+    		lovecellContent.setAttribute("alt", "The Pulpit Rock");
+		lovecellContent.style.cursor = "pointer";
+		/*lovecellContent.onclick = function() { 
+			if (searchresultscopy[itemnum].taggedvalue==1) 
+				{
+					searchresultscopy[itemnum].taggedvalue=0
+					//ipcRenderer.send('asynchronous-removetaggeditem',searchresultscopy[itemnum])
+				} 
+					else {
+						searchresultscopy[itemnum].taggedvalue=1
+						//addtobasket
+						//ipcRenderer.send('asynchronous-addtaggeditem',searchresultscopy[itemnum])
+					}
+			searchresultscopy[itemnum].taggedvalue=0
+			displaySearch() 
+			};*/
+
+			lovecellContent.addEventListener('click', function(ev) {
+			
+			var div = ((((this.parentElement).parentElement).parentElement).parentElement).parentElement;
+			//var div = //(this.parentElement);
+			     // div.style.display = "none";
+
+			if (searchresultscopy[div.id].taggedvalue==1) 
+				{
+					searchresultscopy[div.id].taggedvalue=0
+					ipcRenderer.send('asynchronous-removetaggeditem',searchresultscopy[div.id])
+				} 
+					else {
+						searchresultscopy[div.id].taggedvalue=1
+						//addtobasket
+						ipcRenderer.send('asynchronous-addtaggeditem',searchresultscopy[div.id])
+					}
+			//searchresultscopy[div.id].taggedvalue=0
+			displaySearch() 
+			}, false);
+
+                //lovecell.appendChild(lovecellContent);
+		cellplus.appendChild(lovecellContent);
+                
+cellplus.setAttribute("style", "display: inline-block;");
+rowplus.appendChild(cellplus);
+
+//--------------------------------------
+var buttonscell = document.createElement("td");
+
+var addbasketbtn = document.createElement("BUTTON");
+var addbaskettext = document.createTextNode("Add to Basket");
+addbasketbtn.setAttribute("onclick","displaySearch()");
+addbasketbtn.appendChild(addbaskettext);
+buttonscell.appendChild(addbasketbtn);
+//rowplus.appendChild(addbasketbtn);
+
+buttonscell.addEventListener('click', function(ev) {
+ var div = (((this.parentElement).parentElement).parentElement).parentElement;
+     // div.style.display = "none";
+ipcRenderer.send('asynchronous-addtobasket',div.id)
+}, false);
+
+//------------------------------------
+rowplus.appendChild(buttonscell);
+//------------------------------------
+tblBody.appendChild(rowplus);
+//-------------------------
+		
+        //}
+	//tblBody.setAttribute("style", " width 100%;background-color: #D3D3D3;");
+        // append the <tbody> inside the <table>
+        tbl.appendChild(tblBody);
+        // put <table> in the <body>
+	//element.replaceChild(tbl, element.childNodes[0]);
+
+        //element.appendChild(tbl);
+        // tbl border attribute to 
+        tbl.setAttribute("border", "0");
+	
+
+
+
+
+
+
+li.appendChild(tbl);
+
+
+    document.getElementById("myUL").appendChild(li);
+//document.getElementById("myUL").replaceChild(tbl, document.getElementById("myUL").childNodes[0]);
+
+
+
+
+
+
+
+
+itemnum+=1
+}
+
+}
+
+
+
+//----------------------------
+
+/*
+var btn = document.createElement("BUTTON");
+var t = document.createTextNode("Add More Results");
+btn.setAttribute("onclick","moreSearch()");
+btn.appendChild(t);
+element.replaceChild(btn, element.childNodes[1]);
+*/
+//----------------------------
+
+}
+//----------------------------------------
+function moreSearch() {
+maxitem+=10
+executeSearch()
+displaySearch()
+}
+//----------------------------------------
+function sortResults() {
+
+
+var e = document.getElementById("id-sortselect");
+var strUser = e.options[e.selectedIndex].value;
+
+ipcRenderer.send('asynchronous-searchsort',strUser)
+
+}
+
+</script>
+
+
+
+</body>
+</html>
