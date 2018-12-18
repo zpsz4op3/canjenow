@@ -14,7 +14,7 @@
 
 
 
-git clone https://github.com/...
+git clone https://github.com/zpsz4op3/canjenow
 
 npm install
 
